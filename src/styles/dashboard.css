@@ -1,0 +1,251 @@
+/* ═══════════════════════════════════════════════════════
+   MeetInsight AI — Premium Dashboard CSS
+   Dark mode FIRST (default). Light mode via .theme-light
+═══════════════════════════════════════════════════════ */
+
+/* ── Keyframes ── */
+@keyframes plasma1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(60px, 80px) scale(1.1); }
+  66%  { transform: translate(-40px, 40px) scale(0.95); }
+}
+@keyframes plasma2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(-80px, -60px) scale(1.15); }
+  66%  { transform: translate(50px, -30px) scale(0.9); }
+}
+@keyframes plasma3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(70px, -50px) scale(1.2); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%  { opacity: 0.5; transform: scale(1.5); }
+}
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 20px rgba(109, 40, 217, 0.3); }
+  50%  { box-shadow: 0 0 40px rgba(109, 40, 217, 0.65); }
+}
+
+/* ── Card entrance animations ── */
+.card-anim   { animation: float-up 0.5s ease both; }
+.card-anim-1 { animation-delay: 0.05s; }
+.card-anim-2 { animation-delay: 0.10s; }
+.card-anim-3 { animation-delay: 0.15s; }
+.card-anim-4 { animation-delay: 0.20s; }
+.card-anim-5 { animation-delay: 0.25s; }
+.card-anim-6 { animation-delay: 0.30s; }
+.card-anim-7 { animation-delay: 0.35s; }
+
+/* ── Glassmorphism card (dark default) ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(109, 40, 217, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(109, 40, 217, 0.2);
+}
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa, #ec4899, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Sidebar nav ── */
+.sidebar-item { transition: all 0.2s ease; }
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(3px);
+}
+.sidebar-item-active {
+  background: linear-gradient(135deg, rgba(109,40,217,0.25), rgba(236,72,153,0.12));
+  border: 1px solid rgba(109,40,217,0.35);
+  box-shadow: 0 0 16px rgba(109,40,217,0.15), inset 0 0 16px rgba(109,40,217,0.05);
+}
+
+/* ── Score badges ── */
+.score-badge-high {
+  background: linear-gradient(135deg, #059669, #10b981);
+  box-shadow: 0 0 12px rgba(16,185,129,0.5);
+}
+.score-badge-mid {
+  background: linear-gradient(135deg, #6D28D9, #7c3aed);
+  box-shadow: 0 0 12px rgba(109,40,217,0.5);
+}
+.score-badge-low {
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+  box-shadow: 0 0 12px rgba(239,68,68,0.4);
+}
+
+/* ── Table rows ── */
+.meeting-row { transition: all 0.2s ease; }
+.meeting-row:hover {
+  background: rgba(109,40,217,0.07);
+  box-shadow: inset 0 0 20px rgba(109,40,217,0.08);
+}
+
+/* ── Page headers (dark default) ── */
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.page-subtitle {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 4px;
+}
+
+/* ── Dark input (default) ── */
+.dark-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+  border-radius: 12px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+.dark-input:focus {
+  border-color: rgba(109,40,217,0.6);
+  box-shadow: 0 0 20px rgba(109,40,217,0.2);
+}
+.dark-input::placeholder { color: rgba(255,255,255,0.25); }
+
+/* ── Buttons ── */
+.btn-primary {
+  background: linear-gradient(135deg, #6D28D9, #EC4899);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px rgba(109,40,217,0.3);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(109,40,217,0.55);
+  transform: scale(1.02);
+}
+.btn-secondary {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.9);
+}
+
+/* ── Status glow ── */
+.status-pending { color: #fb923c; text-shadow: 0 0 8px rgba(251,146,60,0.7); }
+.status-progress { color: #a78bfa; text-shadow: 0 0 8px rgba(167,139,250,0.7); }
+.status-done    { color: #34d399; text-shadow: 0 0 8px rgba(52,211,153,0.7); }
+
+/* ── Divider ── */
+.section-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════
+   LIGHT THEME — sadece .theme-light html class ile aktif
+════════════════════════════════════════════════════ */
+
+/* Genel zemin & metin */
+.theme-light,
+.theme-light body,
+.theme-light #root {
+  background: #F4F4FB !important;
+  color: #1a1a2e !important;
+}
+
+/* Glass kartlar → beyaz kart */
+.theme-light .glass-card {
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: none !important;
+  border: 1px solid rgba(109,40,217,0.1) !important;
+  box-shadow: 0 2px 12px rgba(109,40,217,0.06), 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+.theme-light .glass-card:hover {
+  background: #ffffff !important;
+  border-color: rgba(109,40,217,0.25) !important;
+  box-shadow: 0 8px 32px rgba(109,40,217,0.12) !important;
+}
+
+/* Sidebar */
+.theme-light .sidebar-root {
+  background: rgba(255,255,255,0.97) !important;
+  border-right: 1px solid rgba(109,40,217,0.1) !important;
+}
+.theme-light .sidebar-item:hover {
+  background: rgba(109,40,217,0.07) !important;
+}
+.theme-light .sidebar-item-active {
+  background: linear-gradient(135deg, rgba(109,40,217,0.1), rgba(236,72,153,0.06)) !important;
+  border: 1px solid rgba(109,40,217,0.2) !important;
+  box-shadow: 0 0 12px rgba(109,40,217,0.08) !important;
+}
+
+/* TopBar */
+.theme-light .topbar-root {
+  background: rgba(255,255,255,0.97) !important;
+  border-bottom: 1px solid rgba(109,40,217,0.1) !important;
+}
+
+/* Sayfa başlıkları */
+.theme-light .page-title  { color: #1a1a2e !important; }
+.theme-light .page-subtitle { color: #6b7280 !important; }
+
+/* Tablo satırları */
+.theme-light .meeting-row:hover {
+  background: rgba(109,40,217,0.04) !important;
+  box-shadow: inset 0 0 20px rgba(109,40,217,0.04) !important;
+}
+
+/* Input */
+.theme-light .dark-input {
+  background: #f9f9ff !important;
+  border: 1px solid rgba(109,40,217,0.18) !important;
+  color: #1a1a2e !important;
+}
+.theme-light .dark-input:focus {
+  border-color: rgba(109,40,217,0.5) !important;
+  box-shadow: 0 0 16px rgba(109,40,217,0.1) !important;
+}
+.theme-light .dark-input::placeholder { color: #9ca3af !important; }
+
+/* Butonlar */
+.theme-light .btn-secondary {
+  background: rgba(109,40,217,0.06) !important;
+  color: #4b21a0 !important;
+  border: 1px solid rgba(109,40,217,0.18) !important;
+}
+.theme-light .btn-secondary:hover {
+  background: rgba(109,40,217,0.12) !important;
+  color: #3b1680 !important;
+}
+
+/* Recharts grid */
+.theme-light .recharts-cartesian-grid line {
+  stroke: rgba(109,40,217,0.07) !important;
+}
