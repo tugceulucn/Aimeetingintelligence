@@ -703,9 +703,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const t = (key: string): string => {
     const val = translations[language][key] ?? translations['en'][key];
     if (val === undefined) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`[i18n] Missing key: "${key}" for language "${language}"`);
-      }
       return key;
     }
     return val;

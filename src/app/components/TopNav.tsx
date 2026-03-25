@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Bell, Search, Plus, Menu, Sun, Moon, Globe, ChevronDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { UploadModal } from './UploadModal';
 
 export function TopNav() {
   const { t, theme, toggleTheme, language, setLanguage } = useApp();
   const [searchFocused, setSearchFocused] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const isLight = theme === 'light';
 
@@ -31,6 +33,7 @@ export function TopNav() {
   const langFull: Record<string, string> = { en: 'English', tr: 'Türkçe' };
 
   return (
+    <>
     <div
       className="topbar-root flex h-16 items-center justify-between px-6 shrink-0"
       style={{
@@ -92,6 +95,7 @@ export function TopNav() {
 
         {/* Upload Recording */}
         <button
+          onClick={() => setUploadOpen(true)}
           className="hidden sm:flex items-center gap-2 rounded-xl px-4 py-2 text-sm text-white transition-all duration-200"
           style={{
             background: 'linear-gradient(135deg, #6D28D9, #EC4899)',
@@ -284,5 +288,8 @@ export function TopNav() {
         </button>
       </div>
     </div>
+
+      {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} />}
+    </>
   );
 }
