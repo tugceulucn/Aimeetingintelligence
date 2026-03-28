@@ -55,7 +55,7 @@ Upload Recording
 
 3️⃣ Main Dashboard Content
 Page Header
-Good morning Sarah 👋
+Hello Sarah 👋
 Here is your meeting intelligence overview
 4️⃣ KPI Cards (Top Metrics)
 

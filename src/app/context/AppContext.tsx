@@ -83,7 +83,7 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.plan': 'Pro Plan',
 
     // Dashboard
-    'dashboard.greeting': 'Good morning, Sarah 👋',
+    'dashboard.greeting': 'Hello, Sarah 👋',
     'dashboard.subtitle': "Here's your AI meeting intelligence overview for today — Thursday, March 19",
     'dashboard.productivityScore': 'Productivity Score',
     'dashboard.meetingsWeek': 'Meetings This Week',
@@ -395,7 +395,7 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.plan': 'Pro Plan',
 
     // Dashboard
-    'dashboard.greeting': 'Günaydın, Sarah 👋',
+    'dashboard.greeting': 'Merhaba, Sarah 👋',
     'dashboard.subtitle': 'Bugün için AI toplantı zekası özetiniz — 19 Mart, Perşembe',
     'dashboard.productivityScore': 'Verimlilik Puanı',
     'dashboard.meetingsWeek': 'Bu Haftaki Toplantılar',

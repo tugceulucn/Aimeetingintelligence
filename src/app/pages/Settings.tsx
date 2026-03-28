@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { User, Building2, Shield, CreditCard, Database, Bell, Check } from 'lucide-react';
 import { useApp, useThemeColors } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { getUserProfile } from '../lib/userProfile';
 
 type Tab = 'profile' | 'workspace' | 'security' | 'billing' | 'privacy' | 'notifications';
 
@@ -59,7 +61,21 @@ function SectionCard({ title, subtitle, children, tc }: { title: string; subtitl
   );
 }
 
-function ProfileSettings({ t, tc }: { t: (k: string) => string; tc: ReturnType<typeof useThemeColors> }) {
+function ProfileSettings({
+  t,
+  tc,
+  firstName,
+  lastName,
+  email,
+  initials,
+}: {
+  t: (k: string) => string;
+  tc: ReturnType<typeof useThemeColors>;
+  firstName: string;
+  lastName: string;
+  email: string;
+  initials: string;
+}) {
   return (
     <SectionCard title={t('settings.profileInfo')} subtitle={t('settings.profileInfoSub')} tc={tc}>
       <div className="space-y-5">
@@ -68,7 +84,7 @@ function ProfileSettings({ t, tc }: { t: (k: string) => string; tc: ReturnType<t
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-2xl text-white"
             style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 800, boxShadow: '0 0 24px rgba(109,40,217,0.5)' }}
           >
-            SC
+            {initials}
           </div>
           <div>
             <button className="btn-secondary px-4 py-2 text-sm rounded-xl">{t('settings.changeAvatar')}</button>
@@ -76,10 +92,10 @@ function ProfileSettings({ t, tc }: { t: (k: string) => string; tc: ReturnType<t
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <DarkInput label={t('settings.firstName')} type="text" defaultValue="Sarah" tc={tc} />
-          <DarkInput label={t('settings.lastName')} type="text" defaultValue="Chen" tc={tc} />
+          <DarkInput label={t('settings.firstName')} type="text" defaultValue={firstName} tc={tc} />
+          <DarkInput label={t('settings.lastName')} type="text" defaultValue={lastName} tc={tc} />
         </div>
-        <DarkInput label={t('settings.email')} type="email" defaultValue="sarah@company.com" tc={tc} />
+        <DarkInput label={t('settings.email')} type="email" defaultValue={email} tc={tc} />
         <DarkInput label={t('settings.jobTitle')} type="text" defaultValue="Product Manager" tc={tc} />
         <div className="flex justify-end gap-3 pt-5" style={{ borderTop: `1px solid ${tc.sectionDivider}` }}>
           <button className="btn-secondary px-4 py-2.5 text-sm rounded-xl">{t('settings.cancel')}</button>
@@ -281,8 +297,10 @@ function NotificationSettings({ t, tc }: { t: (k: string) => string; tc: ReturnT
 
 export function Settings() {
   const { t } = useApp();
+  const { user } = useAuth();
   const tc = useThemeColors();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const profile = getUserProfile(user);
 
   const tabs: { id: Tab; labelKey: string; icon: React.ElementType }[] = [
     { id: 'profile', labelKey: 'settings.profile', icon: User },
@@ -325,7 +343,16 @@ export function Settings() {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          {activeTab === 'profile' && <ProfileSettings t={t} tc={tc} />}
+          {activeTab === 'profile' && (
+            <ProfileSettings
+              t={t}
+              tc={tc}
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              email={profile.email}
+              initials={profile.initials}
+            />
+          )}
           {activeTab === 'workspace' && <WorkspaceSettings t={t} tc={tc} />}
           {activeTab === 'security' && <SecuritySettings t={t} tc={tc} />}
           {activeTab === 'billing' && <BillingSettings t={t} tc={tc} />}

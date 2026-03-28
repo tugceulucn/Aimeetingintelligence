@@ -13,6 +13,7 @@ import { Analytics } from './pages/Analytics';
 import { Integrations } from './pages/Integrations';
 import { Settings } from './pages/Settings';
 import { DashboardLayout } from './layout/DashboardLayout';
+import { PublicOnlyRoute, RequireAuth } from './components/auth/AuthGuards';
 
 export const router = createBrowserRouter([
   {
@@ -20,12 +21,17 @@ export const router = createBrowserRouter([
     Component: Landing,
   },
   {
-    path: '/login',
-    Component: Login,
-  },
-  {
-    path: '/signup',
-    Component: Login,
+    Component: PublicOnlyRoute,
+    children: [
+      {
+        path: '/login',
+        Component: Login,
+      },
+      {
+        path: '/signup',
+        Component: Login,
+      },
+    ],
   },
   {
     path: '/connect',
@@ -36,44 +42,49 @@ export const router = createBrowserRouter([
     Component: Blog,
   },
   {
-    path: '/',
-    Component: DashboardLayout,
+    Component: RequireAuth,
     children: [
       {
-        path: 'dashboard',
-        Component: Dashboard,
-      },
-      {
-        path: 'meetings',
-        Component: Meetings,
-      },
-      {
-        path: 'meetings/:id',
-        Component: MeetingDetail,
-      },
-      {
-        path: 'intelligence',
-        Component: Intelligence,
-      },
-      {
-        path: 'decisions',
-        Component: Decisions,
-      },
-      {
-        path: 'action-items',
-        Component: ActionItems,
-      },
-      {
-        path: 'analytics',
-        Component: Analytics,
-      },
-      {
-        path: 'integrations',
-        Component: Integrations,
-      },
-      {
-        path: 'settings',
-        Component: Settings,
+        path: '/',
+        Component: DashboardLayout,
+        children: [
+          {
+            path: 'dashboard',
+            Component: Dashboard,
+          },
+          {
+            path: 'meetings',
+            Component: Meetings,
+          },
+          {
+            path: 'meetings/:id',
+            Component: MeetingDetail,
+          },
+          {
+            path: 'intelligence',
+            Component: Intelligence,
+          },
+          {
+            path: 'decisions',
+            Component: Decisions,
+          },
+          {
+            path: 'action-items',
+            Component: ActionItems,
+          },
+          {
+            path: 'analytics',
+            Component: Analytics,
+          },
+          {
+            path: 'integrations',
+            Component: Integrations,
+          },
+          {
+            path: 'settings',
+            Component: Settings,
+          },
+        ],
       },
     ],
   },

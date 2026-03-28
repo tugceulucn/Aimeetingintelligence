@@ -6,6 +6,8 @@ import {
   User, Mail, Shield, LogOut, Bell, HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { getUserProfile } from '../lib/userProfile';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -22,6 +24,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, theme } = useApp();
+  const { user, signOut } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +60,11 @@ export function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function handleSignOut() {
+  const profile = getUserProfile(user);
+
+  async function handleSignOut() {
     setProfileOpen(false);
+    await signOut();
     navigate('/');
   }
 
@@ -144,11 +150,11 @@ export function Sidebar() {
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white text-sm"
                   style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 700, boxShadow: '0 0 16px rgba(109,40,217,0.5)' }}
                 >
-                  SC
+                  {profile.initials}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>Sarah Chen</p>
-                  <p className="text-xs truncate" style={{ color: emailColor }}>sarah@company.com</p>
+                  <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>{profile.fullName}</p>
+                  <p className="text-xs truncate" style={{ color: emailColor }}>{profile.email}</p>
                   <span
                     className="inline-flex items-center mt-1 rounded-full px-2 py-0.5 text-xs"
                     style={{ background: 'rgba(109,40,217,0.15)', color: '#a78bfa', fontWeight: 600, border: '1px solid rgba(109,40,217,0.3)' }}
@@ -209,11 +215,11 @@ export function Sidebar() {
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs"
               style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 700, boxShadow: '0 0 10px rgba(109,40,217,0.4)' }}
             >
-              SC
+              {profile.initials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>Sarah Chen</p>
-              <p className="text-xs truncate" style={{ color: textSub }}>sarah@company.com</p>
+              <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>{profile.fullName}</p>
+              <p className="text-xs truncate" style={{ color: textSub }}>{profile.email}</p>
             </div>
             <ChevronUp
               className="h-3.5 w-3.5 shrink-0 transition-transform duration-200"
