@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { meetings, weeklyProductivity, meetingWaste, teamMeetingHours } from '../data/mockData';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 /* ─── Animated counter hook ─── */
 function useCountUp(target: number, duration = 1200) {
@@ -181,8 +182,27 @@ function PlatformDot({ platform }: { platform: string }) {
 
 /* ─── Main Dashboard ─── */
 export function Dashboard() {
-  const { t, theme } = useApp();
+  const { t, theme, language } = useApp();
+  const { user } = useAuth();
   const isLight = theme === 'light';
+
+  const firstName =
+    (user?.user_metadata?.first_name as string) ||
+    ((user?.user_metadata?.full_name as string) ?? '').split(' ')[0] ||
+    'Sarah';
+
+  const today = new Date();
+  const dateStr =
+    language === 'tr'
+      ? today.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
+      : today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const greeting =
+    language === 'tr' ? `Merhaba, ${firstName} 👋` : `Hello, ${firstName} 👋`;
+  const subtitle =
+    language === 'tr'
+      ? `Bugün için AI toplantı zekası özetiniz — ${dateStr}`
+      : `Here's your AI meeting intelligence overview for today — ${dateStr}`;
 
   const textColor = isLight ? '#1a1a2e' : 'rgba(255,255,255,0.85)';
   const textMuted = isLight ? '#6b7280' : 'rgba(255,255,255,0.4)';
@@ -210,10 +230,10 @@ export function Dashboard() {
       {/* Header */}
       <div className="card-anim card-anim-1">
         <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.025em', color: textColor }}>
-          {t('dashboard.greeting')}
+          {greeting}
         </h1>
         <p className="mt-1 text-sm" style={{ color: textMuted }}>
-          {t('dashboard.subtitle')}
+          {subtitle}
         </p>
       </div>
 

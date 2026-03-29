@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import {
   X, FileAudio, Upload, RefreshCw, AlertCircle,
-  CheckCircle, Copy, Download, Clock, Languages, User,
+  CheckCircle, Copy, Download, Clock, Languages, User, Sparkles, Flag, CheckSquare,
 } from 'lucide-react';
 import { useApp, useThemeColors } from '../context/AppContext';
 import {
@@ -13,6 +13,7 @@ import {
   formatTimestamp,
   TranscriptUtterance,
 } from '../services/gladiaService';
+import { analyzeMeeting, isAIConfigured, type MeetingAnalysis } from '../services/aiService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,6 +97,9 @@ export function UploadModal({ onClose }: Props) {
   const [showSpeakers, setShowSpeakers] = useState(true);
   const [showTimestamps, setShowTimestamps] = useState(true);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<MeetingAnalysis | null>(null);
+  const [analyzeError, setAnalyzeError] = useState('');
 
   // Theme tokens
   const modalBg    = isLight ? '#ffffff' : 'rgba(13,10,22,0.97)';
@@ -179,6 +183,20 @@ export function UploadModal({ onClose }: Props) {
   }
 
   // ── Download as .txt ────────────────────────────────────────────────────────
+
+  async function handleAnalyze() {
+    if (!result) return;
+    setIsAnalyzing(true);
+    setAnalyzeError('');
+    try {
+      const data = await analyzeMeeting(result.fullText, result.utterances);
+      setAnalysis(data);
+    } catch (err) {
+      setAnalyzeError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
 
   function downloadTranscript() {
     if (!result) return;
@@ -356,13 +374,219 @@ export function UploadModal({ onClose }: Props) {
               <span className="text-xs" style={{ color: textMuted }}>{result.utterances.length} utterances</span>
             )}
             <button
-              onClick={() => { setStatus('idle'); setResult(null); setProgress(0); }}
+              onClick={() => { setStatus('idle'); setResult(null); setProgress(0); setAnalysis(null); setAnalyzeError(''); }}
               className="ml-auto text-xs px-3 py-1.5 rounded-lg transition-all"
               style={{ color: '#a78bfa', background: 'rgba(109,40,217,0.1)', border: '1px solid rgba(109,40,217,0.25)' }}
             >
               Upload another
             </button>
           </div>
+
+          {/* ── AI Analysis Section ─────────────────────────────────────── */}
+
+          {/* Analyze button — shown when not yet analyzed */}
+          {isAIConfigured() && !analysis && !isAnalyzing && (
+            <div className="px-5 py-4 border-t" style={{ borderColor: border }}>
+              <button
+                onClick={handleAnalyze}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                style={{
+                  background: 'linear-gradient(135deg,#6D28D9,#EC4899)',
+                  color: '#fff',
+                  boxShadow: '0 0 20px rgba(109,40,217,0.3)',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 30px rgba(109,40,217,0.5)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 20px rgba(109,40,217,0.3)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+              >
+                <Sparkles className="w-4 h-4" />
+                Analyze Meeting with AI
+              </button>
+            </div>
+          )}
+
+          {/* No API key notice */}
+          {!isAIConfigured() && (
+            <div className="px-5 py-3 border-t" style={{ borderColor: border }}>
+              <p className="text-xs text-center" style={{ color: textMuted }}>
+                Add <span style={{ color: '#a78bfa', fontFamily: 'monospace' }}>VITE_OPENAI_API_KEY</span> to enable AI analysis
+              </p>
+            </div>
+          )}
+
+          {/* Analyzing spinner */}
+          {isAnalyzing && (
+            <div className="flex items-center justify-center gap-3 px-5 py-5 border-t" style={{ borderColor: border }}>
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg,#6D28D9,#EC4899)', animation: 'glow-breathe 3s ease-in-out infinite' }}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="text-sm" style={{ color: textMuted }}>Analyzing meeting with AI...</span>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin ml-1" style={{ color: '#a78bfa' }} />
+            </div>
+          )}
+
+          {/* Analyze error */}
+          {analyzeError && (
+            <div className="flex items-center gap-2 px-5 py-3 border-t" style={{ borderColor: border }}>
+              <AlertCircle className="w-4 h-4 shrink-0" style={{ color: '#EF4444' }} />
+              <p className="text-xs" style={{ color: '#EF4444' }}>{analyzeError}</p>
+              <button
+                onClick={handleAnalyze}
+                className="ml-auto text-xs px-2.5 py-1 rounded-lg"
+                style={{ color: '#a78bfa', background: 'rgba(109,40,217,0.1)', border: '1px solid rgba(109,40,217,0.25)' }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Analysis results */}
+          {analysis && (
+            <div className="border-t overflow-y-auto" style={{ borderColor: border, maxHeight: 420 }}>
+
+              {/* Analysis header + scores */}
+              <div className="px-5 py-4" style={{ borderBottom: `1px solid ${border}` }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    className="w-5 h-5 rounded-md flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg,#6D28D9,#EC4899)' }}
+                  >
+                    <Sparkles className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#a78bfa' }}>
+                    AI Analysis
+                  </span>
+                  <div className="ml-auto flex items-center gap-4">
+                    <span className="text-xs" style={{ color: textMuted }}>
+                      Productivity{' '}
+                      <span style={{ color: '#34d399', fontWeight: 700 }}>
+                        {analysis.metrics.productivity_score}
+                      </span>
+                    </span>
+                    <span className="text-xs" style={{ color: textMuted }}>
+                      Participation{' '}
+                      <span style={{ color: '#22D3EE', fontWeight: 700 }}>
+                        {analysis.metrics.participation_score}
+                      </span>
+                    </span>
+                    {analysis.metrics.meeting_duration_minutes > 0 && (
+                      <span className="text-xs" style={{ color: textMuted }}>
+                        <Clock className="w-3 h-3 inline mr-1" />
+                        {analysis.metrics.meeting_duration_minutes}m
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Short summary */}
+                <p className="text-sm leading-relaxed" style={{ color: textPrimary }}>
+                  {analysis.summary.short_summary}
+                </p>
+
+                {/* Bullet summary */}
+                {analysis.summary.bullet_summary.length > 0 && (
+                  <ul className="mt-3 space-y-1.5">
+                    {analysis.summary.bullet_summary.map((b, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs" style={{ color: textMuted }}>
+                        <span style={{ color: '#a78bfa', marginTop: 1, flexShrink: 0 }}>▸</span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Actions */}
+              {analysis.actions.length > 0 && (
+                <div className="px-5 py-3" style={{ borderBottom: `1px solid ${border}` }}>
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <CheckSquare className="w-3.5 h-3.5" style={{ color: '#22D3EE' }} />
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#22D3EE' }}>
+                      Action Items ({analysis.actions.length})
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {analysis.actions.map((a, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg p-3"
+                        style={{
+                          background: 'rgba(34,211,238,0.04)',
+                          border: '1px solid rgba(34,211,238,0.15)',
+                          borderLeft: '2px solid #22D3EE',
+                        }}
+                      >
+                        <p className="text-xs font-medium" style={{ color: textPrimary }}>{a.task}</p>
+                        <div className="flex flex-wrap items-center gap-2.5 mt-1.5">
+                          {a.owner && (
+                            <span className="flex items-center gap-1 text-[11px]" style={{ color: textMuted }}>
+                              <User className="w-3 h-3" />{a.owner}
+                            </span>
+                          )}
+                          {a.due_date && (
+                            <span className="text-[11px]" style={{ color: textMuted }}>📅 {a.due_date}</span>
+                          )}
+                          {a.priority && (
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                              style={{
+                                background: a.priority === 'high' ? 'rgba(239,68,68,0.1)' : a.priority === 'medium' ? 'rgba(245,158,11,0.1)' : 'rgba(52,211,153,0.1)',
+                                color: a.priority === 'high' ? '#ef4444' : a.priority === 'medium' ? '#f59e0b' : '#34d399',
+                              }}
+                            >
+                              {a.priority.toUpperCase()}
+                            </span>
+                          )}
+                          <span className="text-[10px] ml-auto" style={{ color: textMuted }}>
+                            {Math.round(a.confidence * 100)}% confidence
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Decisions */}
+              {analysis.decisions.length > 0 && (
+                <div className="px-5 py-3">
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <Flag className="w-3.5 h-3.5" style={{ color: '#a78bfa' }} />
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#a78bfa' }}>
+                      Decisions ({analysis.decisions.length})
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {analysis.decisions.map((d, i) => (
+                      <div
+                        key={i}
+                        className="rounded-lg p-3"
+                        style={{
+                          background: 'rgba(109,40,217,0.05)',
+                          border: '1px solid rgba(109,40,217,0.18)',
+                          borderLeft: '2px solid #6D28D9',
+                        }}
+                      >
+                        <p className="text-xs" style={{ color: textPrimary }}>{d.decision}</p>
+                        <p className="text-[10px] mt-1 text-right" style={{ color: textMuted }}>
+                          {Math.round(d.confidence * 100)}% confidence
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {analysis.actions.length === 0 && analysis.decisions.length === 0 && (
+                <div className="px-5 py-4 text-center">
+                  <p className="text-xs" style={{ color: textMuted }}>No action items or decisions detected in this transcript.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       );
     }
