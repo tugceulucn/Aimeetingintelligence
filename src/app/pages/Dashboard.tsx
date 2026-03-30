@@ -11,6 +11,7 @@ import {
 import { meetings, weeklyProductivity, meetingWaste, teamMeetingHours } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { getUserProfile } from '../lib/userProfile';
 
 /* ─── Animated counter hook ─── */
 function useCountUp(target: number, duration = 1200) {
@@ -183,13 +184,10 @@ function PlatformDot({ platform }: { platform: string }) {
 /* ─── Main Dashboard ─── */
 export function Dashboard() {
   const { t, theme, language } = useApp();
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
   const isLight = theme === 'light';
-
-  const firstName =
-    (user?.user_metadata?.first_name as string) ||
-    ((user?.user_metadata?.full_name as string) ?? '').split(' ')[0] ||
-    'Sarah';
+  const profile = getUserProfile(user, appUser);
+  const firstName = profile.firstName;
 
   const today = new Date();
   const dateStr =

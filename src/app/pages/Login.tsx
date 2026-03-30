@@ -12,8 +12,13 @@ export function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signIn, signUp, signInWithOAuth, isConfigured } = useAuth();
+  const [accountType, setAccountType] = useState<'individual' | 'employee'>('individual');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [department, setDepartment] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
@@ -54,11 +59,26 @@ export function Login() {
           return;
         }
 
+        if (!workspaceName.trim()) {
+          setError('Lütfen workspace adını doldurun.');
+          return;
+        }
+
+        if (accountType === 'employee' && !companyName.trim()) {
+          setError('Firma çalışanı kaydı için şirket adını girin.');
+          return;
+        }
+
         const result = await signUp({
+          accountType,
           firstName: trimmedFirstName,
           lastName: trimmedLastName,
           email: trimmedEmail,
           password,
+          companyName: companyName.trim(),
+          workspaceName: workspaceName.trim(),
+          jobTitle: jobTitle.trim(),
+          department: department.trim(),
         });
         if (result.needsEmailConfirmation) {
           setMessage('Kayıt oluşturuldu. Supabase e-posta dogrulaması için gelen kutunu kontrol et.');
@@ -175,50 +195,182 @@ export function Login() {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             {isSignup && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                    Ad
+                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 8 }}>
+                    Kayit tipi
                   </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={(event) => setFirstName(event.target.value)}
-                      placeholder="Adınız"
-                      className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('individual')}
+                      className="rounded-xl px-4 py-3 text-left text-sm transition-all"
                       style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'rgba(255,255,255,0.85)',
+                        background: accountType === 'individual' ? 'rgba(109,40,217,0.18)' : 'rgba(255,255,255,0.04)',
+                        border: accountType === 'individual' ? '1px solid rgba(109,40,217,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.88)',
                       }}
-                      required={isSignup}
-                    />
+                    >
+                      <div style={{ fontWeight: 700 }}>Bireysel</div>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+                        Tek başına bireysel kullanıcı olarak kaydol
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('employee')}
+                      className="rounded-xl px-4 py-3 text-left text-sm transition-all"
+                      style={{
+                        background: accountType === 'employee' ? 'rgba(109,40,217,0.18)' : 'rgba(255,255,255,0.04)',
+                        border: accountType === 'employee' ? '1px solid rgba(109,40,217,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.88)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 700 }}>Firma calışanı</div>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+                        Bir firma workspace altında kaydol
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+                      Ad
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        placeholder="Adınız"
+                        className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.85)',
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+                      Soyad
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                      placeholder="Soyadınız"
+                        className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.85)',
+                        }}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                    Soyad
+                    Workspace adı
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
                     <input
                       type="text"
-                      value={lastName}
-                      onChange={(event) => setLastName(event.target.value)}
-                      placeholder="Soyadınız"
+                      value={workspaceName}
+                      onChange={(event) => setWorkspaceName(event.target.value)}
+                      placeholder="Orn. Mustafa Workspace"
                       className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
                       style={{
                         background: 'rgba(255,255,255,0.05)',
                         border: '1px solid rgba(255,255,255,0.1)',
                         color: 'rgba(255,255,255,0.85)',
                       }}
-                      required={isSignup}
+                      required
                     />
                   </div>
                 </div>
+
+                {accountType === 'employee' && (
+                  <div className="space-y-4">
+                    <div>
+                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+                          Şirket adı
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                          <input
+                            type="text"
+                            value={companyName}
+                            onChange={(event) => setCompanyName(event.target.value)}
+                            placeholder="Şirketiniz"
+                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.85)',
+                            }}
+                            required={accountType === 'employee'}
+                          />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+                          Unvan
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                          <input
+                            type="text"
+                            value={jobTitle}
+                            onChange={(event) => setJobTitle(event.target.value)}
+                            placeholder="Orn. Product Manager"
+                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.85)',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+                          Departman
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                          <input
+                            type="text"
+                            value={department}
+                            onChange={(event) => setDepartment(event.target.value)}
+                            placeholder="Orn. Product"
+                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              color: 'rgba(255,255,255,0.85)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -355,16 +507,16 @@ export function Login() {
             <span className="text-2xl font-bold text-white">{getInitials(email)}</span>
           </div>
           <h3 style={{ fontSize: '26px', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Supabase ile guvenli giris
+            Hesabını güvenle oluştur
           </h3>
           <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
-            E-posta şifre veya OAuth ile oturum açılır. Başarılı giriş sonrasında kullanıcı dashboard alanına yönlendirilir.
+            Kullanıcı ister bireysel olarak ister bir firma workspace altında çalişan olarak kayıt olabilir. Kayıt sonrası auth ve tablo kayıtları birlikte oluşturulur.
           </p>
           <div className="mt-8 flex items-center justify-center gap-6">
             {[
-              { val: 'Email', lbl: 'Password Auth' },
-              { val: 'OAuth', lbl: 'Google ve Microsoft' },
-              { val: 'JWT', lbl: 'Session saklama' },
+              { val: 'Users', lbl: 'Profil kaydı' },
+              { val: 'Teams', lbl: 'Workspace üyeliği' },
+              { val: 'Auth', lbl: 'E-posta girişi' },
             ].map(({ val, lbl }) => (
               <div key={lbl} className="text-center">
                 <p style={{ fontSize: '22px', fontWeight: 800, background: 'linear-gradient(135deg,#a78bfa,#ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{val}</p>

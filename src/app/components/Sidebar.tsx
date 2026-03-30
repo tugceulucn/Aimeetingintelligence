@@ -2,29 +2,18 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
   Home, Calendar, Brain, CheckSquare, Flag, BarChart3,
-  Plug, Settings, Building2, CreditCard, ChevronUp,
+  Plug, Settings, ChevronUp,
   User, Mail, Shield, LogOut, Bell, HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { getUserProfile } from '../lib/userProfile';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Meetings', href: '/meetings', icon: Calendar },
-  { name: 'Meeting Intelligence', href: '/intelligence', icon: Brain },
-  { name: 'Action Items', href: '/action-items', icon: CheckSquare },
-  { name: 'Decisions', href: '/decisions', icon: Flag },
-  { name: 'Team Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Integrations', href: '/integrations', icon: Plug },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
-
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, theme } = useApp();
-  const { user, signOut } = useAuth();
+  const { user, appUser, signOut } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +30,16 @@ export function Sidebar() {
   const dropdownItemHoverColor = isLight ? '#1a1a2e' : 'rgba(255,255,255,0.85)';
   const nameColor = isLight ? '#1a1a2e' : '#ffffff';
   const emailColor = isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.4)';
+  const navigation = [
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Home },
+    { name: t('nav.meetings'), href: '/meetings', icon: Calendar },
+    { name: t('nav.intelligence'), href: '/intelligence', icon: Brain },
+    { name: t('nav.actionItems'), href: '/action-items', icon: CheckSquare },
+    { name: t('nav.decisions'), href: '/decisions', icon: Flag },
+    { name: t('nav.analytics'), href: '/analytics', icon: BarChart3 },
+    { name: t('nav.integrations'), href: '/integrations', icon: Plug },
+    { name: t('nav.settings'), href: '/settings', icon: Settings },
+  ];
 
   const profileItems = [
     { icon: User,        label: t('profile.profile') },
@@ -60,7 +59,7 @@ export function Sidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const profile = getUserProfile(user);
+  const profile = getUserProfile(user, appUser);
 
   async function handleSignOut() {
     setProfileOpen(false);
@@ -117,15 +116,6 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="p-3 space-y-0.5" style={{ borderTop: `1px solid ${sidebarBorder}` }}>
-        <button className="sidebar-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm" style={{ color: textMuted, fontWeight: 500 }}>
-          <Building2 className="h-4 w-4" style={{ color: isLight ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.3)' }} />
-          {t('nav.workspace')}
-        </button>
-        <button className="sidebar-item flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm" style={{ color: textMuted, fontWeight: 500 }}>
-          <CreditCard className="h-4 w-4" style={{ color: isLight ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.3)' }} />
-          {t('nav.billing')}
-        </button>
-
         {/* Profile */}
         <div className="relative" ref={dropdownRef}>
           {profileOpen && (
