@@ -8,22 +8,36 @@ import {
 } from 'react';
 import {
   consumeSessionFromUrl,
+  fetchAppUser,
+  fetchUserWorkspace,
   fetchUser,
   getOAuthUrl,
   getStoredSession,
   isSupabaseConfigured,
+  markUserAsSignedIn,
+  markUserAsSignedOut,
   refreshSession,
   signInWithPassword,
   signOutRequest,
+  type AppWorkspace,
+  type AppUser,
   type SignUpPayload,
   signUpWithPassword,
   storeSession,
+  syncUserRecord,
+  updateAuthUserMetadata,
+  updateAppUser,
+  updateUserPreferences,
+  updateWorkspace,
   type SupabaseSession,
   type SupabaseUser,
 } from '../lib/supabaseAuth';
+import type { Language, Theme } from './AppContext';
 
 type AuthContextValue = {
   user: SupabaseUser | null;
+  appUser: AppUser | null;
+  workspace: AppWorkspace | null;
   session: SupabaseSession | null;
   loading: boolean;
   isConfigured: boolean;
@@ -31,6 +45,10 @@ type AuthContextValue = {
   signUp: (payload: SignUpPayload) => Promise<{ needsEmailConfirmation: boolean }>;
   signInWithOAuth: (provider: 'google' | 'azure') => void;
   signOut: () => Promise<void>;
+  refreshAppUser: () => Promise<void>;
+  updatePreferences: (preferences: { language?: Language; theme?: Theme }) => Promise<void>;
+  saveProfile: (profile: { firstName: string; lastName: string; jobTitle?: string }) => Promise<void>;
+  saveWorkspace: (workspaceName: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -46,6 +64,8 @@ function isSessionFresh(session: SupabaseSession | null) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SupabaseSession | null>(null);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [workspace, setWorkspace] = useState<AppWorkspace | null>(null);
   const [loading, setLoading] = useState(true);
   const isConfigured = isSupabaseConfigured();
 
@@ -60,6 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active) {
           setSession(storedSession);
           setUser(storedSession?.user ?? null);
+          setAppUser(null);
+          setWorkspace(null);
           setLoading(false);
         }
         return;
@@ -69,7 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const nextSession = isSessionFresh(storedSession)
           ? storedSession
           : await refreshSession(storedSession.refresh_token);
+        await syncUserRecord(nextSession);
+        const nextAppUser = await markUserAsSignedIn(nextSession);
         const nextUser = await fetchUser(nextSession.access_token);
+        const nextWorkspace = await fetchUserWorkspace(nextSession.access_token, nextSession.user.id);
         const hydrated = { ...nextSession, user: nextUser };
 
         storeSession(hydrated);
@@ -77,12 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (active) {
           setSession(hydrated);
           setUser(nextUser);
+          setAppUser(nextAppUser);
+          setWorkspace(nextWorkspace);
         }
       } catch {
         storeSession(null);
         if (active) {
           setSession(null);
           setUser(null);
+          setAppUser(null);
+          setWorkspace(null);
         }
       } finally {
         if (active) {
@@ -100,19 +129,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    appUser,
+    workspace,
     session,
     loading,
     isConfigured,
     async signIn(email: string, password: string) {
       const nextSession = await signInWithPassword(email, password);
-      setSession(nextSession);
-      setUser(nextSession.user);
+      await syncUserRecord(nextSession);
+      const nextUser = await fetchUser(nextSession.access_token);
+      const hydrated = { ...nextSession, user: nextUser };
+      const nextAppUser = await markUserAsSignedIn(hydrated);
+      const nextWorkspace = await fetchUserWorkspace(hydrated.access_token, hydrated.user.id);
+
+      storeSession(hydrated);
+      setSession(hydrated);
+      setUser(nextUser);
+      setAppUser(nextAppUser);
+      setWorkspace(nextWorkspace);
     },
     async signUp(payload: SignUpPayload) {
       const result = await signUpWithPassword(payload);
       if (result.session) {
-        setSession(result.session);
-        setUser(result.session.user);
+        const nextUser = await fetchUser(result.session.access_token);
+        const hydrated = { ...result.session, user: nextUser };
+        const nextAppUser = (await fetchAppUser(hydrated.access_token, hydrated.user.id))
+          ?? (await markUserAsSignedIn(hydrated));
+        const nextWorkspace = await fetchUserWorkspace(hydrated.access_token, hydrated.user.id);
+
+        storeSession(hydrated);
+        setSession(hydrated);
+        setUser(nextUser);
+        setAppUser(nextAppUser);
+        setWorkspace(nextWorkspace);
       }
       return { needsEmailConfirmation: result.needsEmailConfirmation };
     },
@@ -120,16 +169,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.location.assign(getOAuthUrl(provider));
     },
     async signOut() {
-      const accessToken = session?.access_token;
+      const currentSession = session;
       setSession(null);
       setUser(null);
+      setAppUser(null);
+      setWorkspace(null);
       storeSession(null);
 
-      if (accessToken) {
-        await signOutRequest(accessToken);
+      if (currentSession) {
+        await markUserAsSignedOut(currentSession).catch(() => null);
+        await signOutRequest(currentSession.access_token);
       }
     },
-  }), [loading, session, user, isConfigured]);
+    async refreshAppUser() {
+      if (!session) {
+        setAppUser(null);
+        return;
+      }
+
+      const nextAppUser = await fetchAppUser(session.access_token, session.user.id);
+      setAppUser(nextAppUser);
+      const nextWorkspace = await fetchUserWorkspace(session.access_token, session.user.id);
+      setWorkspace(nextWorkspace);
+    },
+    async updatePreferences(preferences) {
+      if (!session) {
+        return;
+      }
+
+      const nextAppUser = await updateUserPreferences(session, preferences);
+      if (nextAppUser) {
+        setAppUser(nextAppUser);
+      }
+    },
+    async saveProfile(profile) {
+      if (!session) {
+        return;
+      }
+
+      const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+      const nextAppUser = await updateAppUser(session.access_token, session.user.id, {
+        full_name: fullName,
+        job_title: profile.jobTitle?.trim() || null,
+      });
+      const nextUser = await updateAuthUserMetadata(session.access_token, {
+        first_name: profile.firstName.trim(),
+        last_name: profile.lastName.trim(),
+        full_name: fullName,
+        job_title: profile.jobTitle?.trim() || null,
+      });
+
+      if (nextAppUser) {
+        setAppUser(nextAppUser);
+      }
+
+      setUser(nextUser);
+      setSession((currentSession) =>
+        currentSession
+          ? {
+              ...currentSession,
+              user: nextUser,
+            }
+          : currentSession
+      );
+    },
+    async saveWorkspace(workspaceName) {
+      if (!session || !workspace) {
+        return;
+      }
+
+      const nextWorkspace = await updateWorkspace(session.access_token, workspace.id, {
+        name: workspaceName.trim(),
+      });
+
+      if (nextWorkspace) {
+        setWorkspace(nextWorkspace);
+      }
+    },
+  }), [appUser, loading, session, user, workspace, isConfigured]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -5,10 +5,10 @@ import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   return (
-    <AppProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <AppProvider>
         <RouterProvider router={router} />
-      </AuthProvider>
-    </AppProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }

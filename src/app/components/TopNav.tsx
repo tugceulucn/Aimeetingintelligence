@@ -7,30 +7,36 @@ import { UploadModal } from './UploadModal';
 
 export function TopNav() {
   const { t, theme, toggleTheme, language, setLanguage } = useApp();
-  const { user } = useAuth();
+  const { user, appUser, workspace } = useAuth();
   const [searchFocused, setSearchFocused] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const isLight = theme === 'light';
-
-  /* ── Dynamic text colors based on theme ── */
   const textMuted = isLight ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.45)';
-  const textSub   = isLight ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.3)';
-  const border    = isLight ? 'rgba(109,40,217,0.12)' : 'rgba(255,255,255,0.07)';
-  const btnBg     = isLight ? 'rgba(109,40,217,0.06)' : 'rgba(255,255,255,0.04)';
-  const btnHover  = isLight ? 'rgba(109,40,217,0.1)'  : 'rgba(255,255,255,0.08)';
-  const inputBg   = isLight ? 'rgba(109,40,217,0.05)' : 'rgba(255,255,255,0.05)';
+  const textSub = isLight ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.3)';
+  const border = isLight ? 'rgba(109,40,217,0.12)' : 'rgba(255,255,255,0.07)';
+  const btnBg = isLight ? 'rgba(109,40,217,0.06)' : 'rgba(255,255,255,0.04)';
+  const btnHover = isLight ? 'rgba(109,40,217,0.1)' : 'rgba(255,255,255,0.08)';
+  const inputBg = isLight ? 'rgba(109,40,217,0.05)' : 'rgba(255,255,255,0.05)';
   const inputBorder = searchFocused
     ? 'rgba(109,40,217,0.6)'
-    : isLight ? 'rgba(109,40,217,0.18)' : 'rgba(255,255,255,0.08)';
+    : isLight
+      ? 'rgba(109,40,217,0.18)'
+      : 'rgba(255,255,255,0.08)';
   const topbarBg = isLight ? 'rgba(255,255,255,0.97)' : 'rgba(11,11,15,0.7)';
   const topbarBorder = isLight ? 'rgba(109,40,217,0.1)' : 'rgba(255,255,255,0.06)';
-  const profile = getUserProfile(user);
+
+  const profile = getUserProfile(user, appUser);
+  const workspaceLabel =
+    workspace?.name?.trim() ||
+    (language === 'tr'
+      ? `${profile.firstName} Çalışma Alanı`
+      : `${profile.firstName}'s Workspace`);
 
   const flags: Record<string, string> = { en: 'EN', tr: 'TR' };
   const langLabels: Record<string, string> = { en: 'EN', tr: 'TR' };
-  const langFull: Record<string, string> = { en: 'English', tr: 'Turkce' };
+  const langFull: Record<string, string> = { en: 'English', tr: 'Türkçe' };
 
   return (
     <>
@@ -44,7 +50,6 @@ export function TopNav() {
           zIndex: 40,
         }}
       >
-      {/* Left */}
         <div className="flex items-center gap-4">
           <button
             className="rounded-lg p-2 transition-colors lg:hidden"
@@ -68,14 +73,12 @@ export function TopNav() {
               }}
             />
             <span className="text-sm" style={{ color: textMuted, fontWeight: 500 }}>
-              {t('topnav.workspace')}
+              {workspaceLabel}
             </span>
           </div>
         </div>
 
-      {/* Right */}
         <div className="flex items-center gap-2">
-        {/* Search */}
           <div className="relative hidden md:block">
             <Search
               className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors"
@@ -97,7 +100,6 @@ export function TopNav() {
             <style>{`input::placeholder { color: ${textSub}; }`}</style>
           </div>
 
-        {/* Upload Recording */}
           <button
             onClick={() => setUploadOpen(true)}
             className="hidden items-center gap-2 rounded-xl px-4 py-2 text-sm text-white transition-all duration-200 sm:flex"
@@ -119,7 +121,6 @@ export function TopNav() {
             {t('topnav.upload')}
           </button>
 
-        {/* ── Theme Toggle ── */}
           <button
             onClick={toggleTheme}
             title={isLight ? t('theme.dark') : t('theme.light')}
@@ -138,7 +139,6 @@ export function TopNav() {
               event.currentTarget.style.background = btnBg;
             }}
           >
-          {/* Sliding pill */}
             <span
               className="absolute inset-0 rounded-xl transition-all duration-300"
               style={{
@@ -167,7 +167,6 @@ export function TopNav() {
             </span>
           </button>
 
-        {/* ── Language Selector ── */}
           <div className="relative">
             <button
               onClick={() => setLangOpen((open) => !open)}
@@ -178,12 +177,6 @@ export function TopNav() {
                 color: textMuted,
                 fontWeight: 600,
                 boxShadow: langOpen ? '0 0 16px rgba(109,40,217,0.2)' : 'none',
-              }}
-              onMouseEnter={(event) => {
-                if (!langOpen) event.currentTarget.style.background = btnHover;
-              }}
-              onMouseLeave={(event) => {
-                if (!langOpen) event.currentTarget.style.background = btnBg;
               }}
             >
               <Globe className="h-3.5 w-3.5" style={{ color: '#a78bfa' }} />
@@ -197,10 +190,8 @@ export function TopNav() {
               />
             </button>
 
-          {/* Dropdown */}
             {langOpen && (
               <>
-              {/* Backdrop */}
                 <div className="fixed inset-0 z-40" onClick={() => setLangOpen(false)} />
                 <div
                   className="absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl"
@@ -212,7 +203,6 @@ export function TopNav() {
                     minWidth: 160,
                   }}
                 >
-                {/* Header */}
                   <div
                     className="px-4 py-2.5 text-xs uppercase tracking-wider"
                     style={{
@@ -228,7 +218,7 @@ export function TopNav() {
                     <button
                       key={lang}
                       onClick={() => {
-                        setLanguage(lang);
+                        void setLanguage(lang);
                         setLangOpen(false);
                       }}
                       className="flex w-full items-center gap-3 px-4 py-3 transition-all duration-150"
@@ -236,12 +226,6 @@ export function TopNav() {
                         color: language === lang ? '#a78bfa' : isLight ? '#1a1a2e' : 'rgba(255,255,255,0.65)',
                         background: language === lang ? 'rgba(109,40,217,0.1)' : 'transparent',
                         fontWeight: language === lang ? 700 : 500,
-                      }}
-                      onMouseEnter={(event) => {
-                        if (language !== lang) event.currentTarget.style.background = 'rgba(109,40,217,0.07)';
-                      }}
-                      onMouseLeave={(event) => {
-                        if (language !== lang) event.currentTarget.style.background = 'transparent';
                       }}
                     >
                       <span className="text-sm">{langLabels[lang]}</span>
@@ -264,7 +248,6 @@ export function TopNav() {
             )}
           </div>
 
-        {/* Notifications */}
           <button
             className="relative rounded-xl p-2.5 transition-all duration-200"
             style={{ background: btnBg, border: `1px solid ${border}` }}
@@ -286,19 +269,12 @@ export function TopNav() {
             />
           </button>
 
-        {/* User Avatar */}
           <button
             className="flex h-9 w-9 items-center justify-center rounded-full text-xs text-white transition-all duration-200"
             style={{
               background: 'linear-gradient(135deg, #6D28D9, #EC4899)',
               fontWeight: 700,
               boxShadow: '0 0 12px rgba(109,40,217,0.4)',
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.boxShadow = '0 0 20px rgba(109,40,217,0.7)';
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.boxShadow = '0 0 12px rgba(109,40,217,0.4)';
             }}
           >
             {profile.initials}

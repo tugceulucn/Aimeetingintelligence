@@ -1,14 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 export type Language = 'en' | 'tr';
 export type Theme = 'dark' | 'light';
 
 interface AppContextValue {
   language: Language;
-  setLanguage: (lang: Language) => void;
+  setLanguage: (lang: Language) => Promise<void>;
   theme: Theme;
-  setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
+  setTheme: (theme: Theme) => Promise<void>;
+  toggleTheme: () => Promise<void>;
   t: (key: string) => string;
 }
 
@@ -57,7 +58,6 @@ export function useThemeColors() {
 const translations: Record<Language, Record<string, string>> = {
   en: {
     // TopNav
-    'topnav.workspace': "Sarah's Workspace",
     'topnav.search': 'Search meetings...',
     'topnav.upload': 'Upload Recording',
 
@@ -83,7 +83,6 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.plan': 'Pro Plan',
 
     // Dashboard
-    'dashboard.greeting': 'Hello, Sarah 👋',
     'dashboard.subtitle': "Here's your AI meeting intelligence overview for today — Thursday, March 19",
     'dashboard.productivityScore': 'Productivity Score',
     'dashboard.meetingsWeek': 'Meetings This Week',
@@ -369,7 +368,6 @@ const translations: Record<Language, Record<string, string>> = {
 
   tr: {
     // TopNav
-    'topnav.workspace': 'Sarah\'nun Çalışma Alanı',
     'topnav.search': 'Toplantı ara...',
     'topnav.upload': 'Kayıt Yükle',
 
@@ -395,7 +393,6 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.plan': 'Pro Plan',
 
     // Dashboard
-    'dashboard.greeting': 'Merhaba, Sarah 👋',
     'dashboard.subtitle': 'Bugün için AI toplantı zekası özetiniz — 19 Mart, Perşembe',
     'dashboard.productivityScore': 'Verimlilik Puanı',
     'dashboard.meetingsWeek': 'Bu Haftaki Toplantılar',
@@ -681,6 +678,7 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { appUser, updatePreferences } = useAuth();
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('meetinsight-lang') as Language) || 'en';
   });
@@ -688,17 +686,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem('meetinsight-theme') as Theme) || 'dark';
   });
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('meetinsight-lang', lang);
+    await updatePreferences({ language: lang });
   };
 
-  const setTheme = (t: Theme) => {
+  const setTheme = async (t: Theme) => {
     setThemeState(t);
     localStorage.setItem('meetinsight-theme', t);
+    await updatePreferences({ theme: t });
   };
 
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const toggleTheme = async () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   const t = (key: string): string => {
     const val = translations[language][key] ?? translations['en'][key];
@@ -719,6 +719,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       root.classList.add('theme-dark');
     }
   }, [theme]);
+
+  useEffect(() => {
+    const nextLanguage =
+      appUser?.language === 'tr' || appUser?.language === 'en'
+        ? appUser.language
+        : null;
+
+    if (nextLanguage && nextLanguage !== language) {
+      setLanguageState(nextLanguage);
+      localStorage.setItem('meetinsight-lang', nextLanguage);
+    }
+  }, [appUser?.language, language]);
+
+  useEffect(() => {
+    const nextTheme =
+      appUser?.theme === 'light' || appUser?.theme === 'dark'
+        ? appUser.theme
+        : null;
+
+    if (nextTheme && nextTheme !== theme) {
+      setThemeState(nextTheme);
+      localStorage.setItem('meetinsight-theme', nextTheme);
+    }
+  }, [appUser?.theme, theme]);
 
   // İlk yüklemede html'e koyu mod sınıfını hemen uygula
   useEffect(() => {
