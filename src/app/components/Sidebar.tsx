@@ -137,10 +137,14 @@ export function Sidebar() {
                 }}
               >
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white text-sm"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-white text-sm"
                   style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 700, boxShadow: '0 0 16px rgba(109,40,217,0.5)' }}
                 >
-                  {profile.initials}
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt={profile.fullName} className="h-full w-full object-cover" />
+                  ) : (
+                    profile.initials
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>{profile.fullName}</p>
@@ -202,10 +206,14 @@ export function Sidebar() {
             onMouseLeave={(e) => { if (!profileOpen) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
             <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs"
+              className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full text-white text-xs"
               style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 700, boxShadow: '0 0 10px rgba(109,40,217,0.4)' }}
             >
-              {profile.initials}
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.fullName} className="h-full w-full object-cover" />
+              ) : (
+                profile.initials
+              )}
             </div>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm truncate" style={{ color: nameColor, fontWeight: 600 }}>{profile.fullName}</p>

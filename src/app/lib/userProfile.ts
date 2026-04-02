@@ -1,4 +1,4 @@
-import type { AppUser, SupabaseUser } from './supabaseAuth';
+import { getAvatarPublicUrl, type AppUser, type SupabaseUser } from './supabaseAuth';
 
 export type UserProfile = {
   email: string;
@@ -6,6 +6,7 @@ export type UserProfile = {
   firstName: string;
   lastName: string;
   initials: string;
+  avatarUrl: string | null;
 };
 
 function getMetadataValue(user: SupabaseUser | null | undefined, key: string) {
@@ -33,6 +34,7 @@ export function getUserProfile(
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('') || 'MI';
+  const avatarUrl = getAvatarPublicUrl(appUser?.avatar_url);
 
   return {
     email,
@@ -40,5 +42,6 @@ export function getUserProfile(
     firstName,
     lastName,
     initials,
+    avatarUrl,
   };
 }

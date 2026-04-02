@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User, Building2, Shield, CreditCard, Database, Bell, Check } from 'lucide-react';
 import { useApp, useThemeColors } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -82,6 +82,29 @@ function SectionCard({
   );
 }
 
+function AvatarBox({
+  avatarUrl,
+  initials,
+  alt,
+}: {
+  avatarUrl: string | null;
+  initials: string;
+  alt: string;
+}) {
+  return (
+    <div
+      className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl text-white"
+      style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 800, boxShadow: '0 0 24px rgba(109,40,217,0.5)' }}
+    >
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={alt} className="h-full w-full object-cover" />
+      ) : (
+        initials
+      )}
+    </div>
+  );
+}
+
 function ProfileSettings({
   t,
   tc,
@@ -89,9 +112,12 @@ function ProfileSettings({
   lastName,
   email,
   initials,
+  avatarUrl,
   jobTitle,
   saving,
   message,
+  messageType,
+  onChooseAvatar,
   onFirstNameChange,
   onLastNameChange,
   onJobTitleChange,
@@ -103,9 +129,12 @@ function ProfileSettings({
   lastName: string;
   email: string;
   initials: string;
+  avatarUrl: string | null;
   jobTitle: string;
   saving: boolean;
   message: string | null;
+  messageType: 'success' | 'error' | null;
+  onChooseAvatar: () => void;
   onFirstNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
   onJobTitleChange: (value: string) => void;
@@ -115,20 +144,26 @@ function ProfileSettings({
     <SectionCard title={t('settings.profileInfo')} subtitle={t('settings.profileInfoSub')} tc={tc}>
       <div className="space-y-5">
         <div className="flex items-center gap-5">
-          <div
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-2xl text-white"
-            style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', fontWeight: 800, boxShadow: '0 0 24px rgba(109,40,217,0.5)' }}
-          >
-            {initials}
-          </div>
+          <AvatarBox avatarUrl={avatarUrl} initials={initials} alt={email} />
           <div>
-            <button className="btn-secondary rounded-xl px-4 py-2 text-sm">{t('settings.changeAvatar')}</button>
-            <p className="mt-2 text-xs" style={{ color: tc.textMuted }}>{t('settings.avatarHint')}</p>
+            <button type="button" onClick={onChooseAvatar} className="btn-secondary rounded-xl px-4 py-2 text-sm">
+              {t('settings.changeAvatar')}
+            </button>
+            <p className="mt-2 text-xs" style={{ color: tc.textMuted }}>
+              {t('settings.avatarHintCustom')}
+            </p>
           </div>
         </div>
 
         {message && (
-          <div className="rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
+          <div
+            className="rounded-xl px-4 py-3 text-sm"
+            style={{
+              background: messageType === 'error' ? 'rgba(239,68,68,0.08)' : 'rgba(34,197,94,0.08)',
+              border: messageType === 'error' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(34,197,94,0.2)',
+              color: messageType === 'error' ? '#fca5a5' : '#86efac',
+            }}
+          >
             {message}
           </div>
         )}
@@ -142,7 +177,7 @@ function ProfileSettings({
 
         <div className="flex justify-end gap-3 pt-5" style={{ borderTop: `1px solid ${tc.sectionDivider}` }}>
           <button className="btn-secondary rounded-xl px-4 py-2.5 text-sm">{t('settings.cancel')}</button>
-          <button className="btn-primary rounded-xl px-5 py-2.5 text-sm" onClick={onSave} disabled={saving}>
+          <button type="button" className="btn-primary rounded-xl px-5 py-2.5 text-sm" onClick={onSave} disabled={saving}>
             {saving ? 'Saving...' : t('settings.save')}
           </button>
         </div>
@@ -180,13 +215,7 @@ function WorkspaceSettings({
             </div>
           )}
 
-          <DarkInput
-            label={t('settings.workspaceName')}
-            type="text"
-            value={workspaceName}
-            onChange={(event) => onWorkspaceNameChange(event.target.value)}
-            tc={tc}
-          />
+          <DarkInput label={t('settings.workspaceName')} type="text" value={workspaceName} onChange={(event) => onWorkspaceNameChange(event.target.value)} tc={tc} />
           <div>
             <label style={{ display: 'block', fontSize: '13px', color: tc.labelText, fontWeight: 600, marginBottom: 6 }}>
               {t('settings.workspaceUrl')}
@@ -204,7 +233,7 @@ function WorkspaceSettings({
             </div>
           </div>
           <div className="flex justify-end pt-4" style={{ borderTop: `1px solid ${tc.sectionDivider}` }}>
-            <button className="btn-primary rounded-xl px-5 py-2.5 text-sm" onClick={onSave} disabled={saving}>
+            <button type="button" className="btn-primary rounded-xl px-5 py-2.5 text-sm" onClick={onSave} disabled={saving}>
               {saving ? 'Saving...' : t('settings.save')}
             </button>
           </div>
@@ -265,22 +294,20 @@ function SecuritySettings({ t, tc }: { t: (k: string) => string; tc: ReturnType<
 
 function BillingSettings({ t, tc }: { t: (k: string) => string; tc: ReturnType<typeof useThemeColors> }) {
   return (
-    <div className="space-y-4">
-      <SectionCard title={t('settings.currentPlan')} tc={tc}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="mb-1 flex items-center gap-2">
-              <p className="gradient-text" style={{ fontSize: '24px', fontWeight: 800 }}>{t('settings.proPlan')}</p>
-              <span className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'rgba(109,40,217,0.2)', color: '#a78bfa', fontWeight: 700, border: '1px solid rgba(109,40,217,0.3)' }}>
-                {t('settings.active')}
-              </span>
-            </div>
-            <p className="text-sm" style={{ color: tc.textDim }}>{t('settings.planDetails')}</p>
+    <SectionCard title={t('settings.currentPlan')} tc={tc}>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <p className="gradient-text" style={{ fontSize: '24px', fontWeight: 800 }}>{t('settings.proPlan')}</p>
+            <span className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'rgba(109,40,217,0.2)', color: '#a78bfa', fontWeight: 700, border: '1px solid rgba(109,40,217,0.3)' }}>
+              {t('settings.active')}
+            </span>
           </div>
-          <button className="btn-secondary rounded-xl px-4 py-2.5 text-sm">{t('settings.changePlan')}</button>
+          <p className="text-sm" style={{ color: tc.textDim }}>{t('settings.planDetails')}</p>
         </div>
-      </SectionCard>
-    </div>
+        <button className="btn-secondary rounded-xl px-4 py-2.5 text-sm">{t('settings.changePlan')}</button>
+      </div>
+    </SectionCard>
   );
 }
 
@@ -334,6 +361,7 @@ export function Settings() {
   const { t } = useApp();
   const { user, appUser, workspace, saveProfile, saveWorkspace } = useAuth();
   const tc = useThemeColors();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const profile = getUserProfile(user, appUser);
 
@@ -344,7 +372,11 @@ export function Settings() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [workspaceSaving, setWorkspaceSaving] = useState(false);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [profileMessageType, setProfileMessageType] = useState<'success' | 'error' | null>(null);
   const [workspaceMessage, setWorkspaceMessage] = useState<string | null>(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(profile.avatarUrl);
+
   const previewProfile = getUserProfile(user, {
     ...(appUser ?? { id: '', email: profile.email }),
     full_name: `${firstName} ${lastName}`.trim(),
@@ -363,18 +395,60 @@ export function Settings() {
     setWorkspaceName(workspace?.name?.trim() || '');
   }, [workspace?.name]);
 
+  useEffect(() => {
+    if (!selectedAvatarFile) {
+      setAvatarPreviewUrl(profile.avatarUrl);
+    }
+  }, [profile.avatarUrl, selectedAvatarFile]);
+
+  useEffect(() => () => {
+    if (avatarPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+  }, [avatarPreviewUrl]);
+
   const workspaceSlug = workspaceName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'meetinsight-workspace';
 
+  function handleAvatarSelection(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setProfileMessage(t('settings.invalidAvatarType'));
+      setProfileMessageType('error');
+      event.target.value = '';
+      return;
+    }
+
+    if (avatarPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+
+    setSelectedAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+    setProfileMessage(null);
+    setProfileMessageType(null);
+    event.target.value = '';
+  }
+
   async function handleProfileSave() {
     setProfileSaving(true);
     setProfileMessage(null);
+    setProfileMessageType(null);
 
     try {
-      await saveProfile({ firstName, lastName, jobTitle });
-      setProfileMessage('Profil bilgileri güncellendi.');
+      await saveProfile({ firstName, lastName, jobTitle, avatarFile: selectedAvatarFile });
+      setSelectedAvatarFile(null);
+      setProfileMessage(t('settings.profileUpdated'));
+      setProfileMessageType('success');
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : t('settings.profileUpdateFailed'));
+      setProfileMessageType('error');
     } finally {
       setProfileSaving(false);
     }
@@ -390,7 +464,9 @@ export function Settings() {
 
     try {
       await saveWorkspace(workspaceName);
-      setWorkspaceMessage('Çalışma alanı güncellendi.');
+      setWorkspaceMessage(t('settings.workspaceUpdated'));
+    } catch (error) {
+      setWorkspaceMessage(error instanceof Error ? error.message : t('settings.workspaceUpdateFailed'));
     } finally {
       setWorkspaceSaving(false);
     }
@@ -443,9 +519,12 @@ export function Settings() {
               lastName={lastName}
               email={profile.email}
               initials={previewProfile.initials}
+              avatarUrl={avatarPreviewUrl}
               jobTitle={jobTitle}
               saving={profileSaving}
               message={profileMessage}
+              messageType={profileMessageType}
+              onChooseAvatar={() => fileInputRef.current?.click()}
               onFirstNameChange={setFirstName}
               onLastNameChange={setLastName}
               onJobTitleChange={setJobTitle}
@@ -470,6 +549,14 @@ export function Settings() {
           {activeTab === 'notifications' && <NotificationSettings t={t} tc={tc} />}
         </div>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+        className="hidden"
+        onChange={handleAvatarSelection}
+      />
     </div>
   );
 }

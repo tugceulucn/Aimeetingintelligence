@@ -49,6 +49,7 @@ export type AppUser = {
   id: string;
   email: string;
   full_name?: string | null;
+  avatar_url?: string | null;
   job_title?: string | null;
   department?: string | null;
   timezone?: string | null;
@@ -116,6 +117,14 @@ async function request<T>(path: string, init: RequestInit = {}) {
   return data as T;
 }
 
+function normalizeStorageErrorMessage(message: string) {
+  if (message.toLowerCase().includes('row-level security policy')) {
+    return 'Supabase Storage policy dosya yuklemeyi engelliyor. profile_images bucket policy ayarlarini duzeltin.';
+  }
+
+  return message;
+}
+
 async function restRequest<T>(path: string, init: RequestInit = {}, accessToken?: string) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase ayarlari eksik. VITE_SUPABASE_URL ve VITE_SUPABASE_ANON_KEY tanimlayin.');
@@ -141,7 +150,7 @@ async function restRequest<T>(path: string, init: RequestInit = {}, accessToken?
       data?.hint ??
       data?.details ??
       'Veritabani islemi basarisiz oldu.';
-    throw new Error(message);
+    throw new Error(normalizeStorageErrorMessage(message));
   }
 
   return data as T;
@@ -241,6 +250,7 @@ export async function updateAppUser(
     Pick<
       AppUser,
       | 'full_name'
+      | 'avatar_url'
       | 'job_title'
       | 'department'
       | 'timezone'
@@ -289,6 +299,65 @@ export async function updateWorkspace(
   );
 
   return rows[0] ?? null;
+}
+
+function getFileExtension(fileName: string) {
+  const parts = fileName.split('.');
+  return parts.length > 1 ? parts.pop()?.toLowerCase() || 'png' : 'png';
+}
+
+export function getAvatarPublicUrl(fileName?: string | null) {
+  if (!supabaseUrl || !fileName) {
+    return null;
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/profile_images/${fileName}`;
+}
+
+export async function uploadProfileImage(accessToken: string, file: File) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase ayarlari eksik. VITE_SUPABASE_URL ve VITE_SUPABASE_ANON_KEY tanimlayin.');
+  }
+
+  const extension = getFileExtension(file.name);
+  const fileName = `${crypto.randomUUID()}.${extension}`;
+  const response = await fetch(`${supabaseUrl}/storage/v1/object/profile_images/${fileName}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'x-upsert': 'true',
+      'Content-Type': file.type || 'application/octet-stream',
+    },
+    body: file,
+  });
+
+  const data = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
+
+  if (!response.ok) {
+    throw new Error(normalizeStorageErrorMessage(data?.message || data?.error || 'Profil resmi yuklenemedi.'));
+  }
+
+  return fileName;
+}
+
+export async function deleteProfileImage(accessToken: string, fileName: string) {
+  if (!supabaseUrl || !supabaseAnonKey || !fileName) {
+    return;
+  }
+
+  const response = await fetch(`${supabaseUrl}/storage/v1/object/profile_images/${fileName}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok && response.status !== 404) {
+    const data = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
+    throw new Error(data?.message || data?.error || 'Eski profil resmi silinemedi.');
+  }
 }
 
 async function insertWorkspaceRow(accessToken: string, payload: SignUpPayload) {

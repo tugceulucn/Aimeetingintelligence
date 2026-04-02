@@ -25,10 +25,12 @@ import {
   signUpWithPassword,
   storeSession,
   syncUserRecord,
+  deleteProfileImage,
   updateAuthUserMetadata,
   updateAppUser,
   updateUserPreferences,
   updateWorkspace,
+  uploadProfileImage,
   type SupabaseSession,
   type SupabaseUser,
 } from '../lib/supabaseAuth';
@@ -47,7 +49,7 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   refreshAppUser: () => Promise<void>;
   updatePreferences: (preferences: { language?: Language; theme?: Theme }) => Promise<void>;
-  saveProfile: (profile: { firstName: string; lastName: string; jobTitle?: string }) => Promise<void>;
+  saveProfile: (profile: { firstName: string; lastName: string; jobTitle?: string; avatarFile?: File | null }) => Promise<void>;
   saveWorkspace: (workspaceName: string) => Promise<void>;
 };
 
@@ -208,30 +210,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const fullName = `${profile.firstName} ${profile.lastName}`.trim();
-      const nextAppUser = await updateAppUser(session.access_token, session.user.id, {
-        full_name: fullName,
-        job_title: profile.jobTitle?.trim() || null,
-      });
-      const nextUser = await updateAuthUserMetadata(session.access_token, {
-        first_name: profile.firstName.trim(),
-        last_name: profile.lastName.trim(),
-        full_name: fullName,
-        job_title: profile.jobTitle?.trim() || null,
-      });
+      const previousAvatarFileName = appUser?.avatar_url?.trim() || null;
+      let uploadedAvatarFileName: string | undefined;
 
-      if (nextAppUser) {
-        setAppUser(nextAppUser);
+      try {
+        uploadedAvatarFileName = profile.avatarFile
+          ? await uploadProfileImage(session.access_token, profile.avatarFile)
+          : undefined;
+
+        const nextAppUser = await updateAppUser(session.access_token, session.user.id, {
+          full_name: fullName,
+          avatar_url: uploadedAvatarFileName,
+          job_title: profile.jobTitle?.trim() || null,
+        });
+        const nextUser = await updateAuthUserMetadata(session.access_token, {
+          first_name: profile.firstName.trim(),
+          last_name: profile.lastName.trim(),
+          full_name: fullName,
+          avatar_url: uploadedAvatarFileName ?? previousAvatarFileName,
+          job_title: profile.jobTitle?.trim() || null,
+        });
+
+        if (nextAppUser) {
+          setAppUser(nextAppUser);
+        }
+
+        setUser(nextUser);
+        setSession((currentSession) =>
+          currentSession
+            ? {
+                ...currentSession,
+                user: nextUser,
+              }
+            : currentSession
+        );
+
+        if (uploadedAvatarFileName && previousAvatarFileName && previousAvatarFileName !== uploadedAvatarFileName) {
+          await deleteProfileImage(session.access_token, previousAvatarFileName).catch(() => null);
+        }
+      } catch (error) {
+        if (uploadedAvatarFileName) {
+          await deleteProfileImage(session.access_token, uploadedAvatarFileName).catch(() => null);
+        }
+
+        throw error;
       }
-
-      setUser(nextUser);
-      setSession((currentSession) =>
-        currentSession
-          ? {
-              ...currentSession,
-              user: nextUser,
-            }
-          : currentSession
-      );
     },
     async saveWorkspace(workspaceName) {
       if (!session || !workspace) {
