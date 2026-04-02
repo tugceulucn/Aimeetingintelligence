@@ -3,9 +3,47 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { ArrowRight, Brain, Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-function getInitials(email?: string) {
-  if (!email) return 'MI';
-  return email.slice(0, 2).toUpperCase();
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  required = false,
+  minLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+  required?: boolean;
+  minLength?: number;
+}) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
+        {label}
+      </label>
+      <div className="relative">
+        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.25)' }} />
+        <input
+          type={type}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.85)',
+          }}
+          required={required}
+          minLength={minLength}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function Login() {
@@ -115,11 +153,8 @@ export function Login() {
   }
 
   return (
-    <div
-      className="flex min-h-screen"
-      style={{ background: '#0B0B0F', fontFamily: 'Inter, sans-serif' }}
-    >
-      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-0">
+    <div className="flex min-h-screen" style={{ background: '#0B0B0F', fontFamily: 'Inter, sans-serif' }}>
+      <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden">
         <div
           style={{
             position: 'absolute',
@@ -176,19 +211,13 @@ export function Login() {
           </p>
 
           {error && (
-            <div
-              className="mb-4 rounded-xl p-3 text-sm"
-              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}
-            >
+            <div className="mb-4 rounded-xl p-3 text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5' }}>
               {error}
             </div>
           )}
 
           {message && (
-            <div
-              className="mb-4 rounded-xl p-3 text-sm"
-              style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}
-            >
+            <div className="mb-4 rounded-xl p-3 text-sm" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#86efac' }}>
               {message}
             </div>
           )}
@@ -198,7 +227,7 @@ export function Login() {
               <div className="space-y-4">
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 8 }}>
-                    Kayit tipi
+                    Kayıt tipi
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -235,139 +264,21 @@ export function Login() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                      Ad
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(event) => setFirstName(event.target.value)}
-                        placeholder="Adınız"
-                        className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: 'rgba(255,255,255,0.85)',
-                        }}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                      Soyad
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(event) => setLastName(event.target.value)}
-                      placeholder="Soyadınız"
-                        className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: 'rgba(255,255,255,0.85)',
-                        }}
-                        required
-                      />
-                    </div>
-                  </div>
+                  <Field label="Ad" value={firstName} onChange={setFirstName} placeholder="Adınız" required />
+                  <Field label="Soyad" value={lastName} onChange={setLastName} placeholder="Soyadınız" required />
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                    Workspace adı
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                    <input
-                      type="text"
-                      value={workspaceName}
-                      onChange={(event) => setWorkspaceName(event.target.value)}
-                      placeholder="Orn. Mustafa Workspace"
-                      className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                      style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'rgba(255,255,255,0.85)',
-                      }}
-                      required
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Workspace adı" value={workspaceName} onChange={setWorkspaceName} placeholder="Orn. Mustafa Workspace" required />
+                  <Field label="Unvan" value={jobTitle} onChange={setJobTitle} placeholder="Orn. Product Manager" />
                 </div>
 
                 {accountType === 'employee' && (
                   <div className="space-y-4">
-                    <div>
-                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                          Şirket adı
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                          <input
-                            type="text"
-                            value={companyName}
-                            onChange={(event) => setCompanyName(event.target.value)}
-                            placeholder="Şirketiniz"
-                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: 'rgba(255,255,255,0.85)',
-                            }}
-                            required={accountType === 'employee'}
-                          />
-                        </div>
-                    </div>
-
+                    <Field label="Şirket adı" value={companyName} onChange={setCompanyName} placeholder="Şirketiniz" required />
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                          Unvan
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                          <input
-                            type="text"
-                            value={jobTitle}
-                            onChange={(event) => setJobTitle(event.target.value)}
-                            placeholder="Orn. Product Manager"
-                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: 'rgba(255,255,255,0.85)',
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', color: 'rgba(255,255,255,0.55)', fontWeight: 600, marginBottom: 6 }}>
-                          Departman
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
-                          <input
-                            type="text"
-                            value={department}
-                            onChange={(event) => setDepartment(event.target.value)}
-                            placeholder="Orn. Product"
-                            className="w-full rounded-xl py-3 pl-10 pr-4 text-sm outline-none transition-all duration-300"
-                            style={{
-                              background: 'rgba(255,255,255,0.05)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: 'rgba(255,255,255,0.85)',
-                            }}
-                          />
-                        </div>
-                      </div>
+                      <Field label="Departman" value={department} onChange={setDepartment} placeholder="Orn. Product" />
+                      <div />
                     </div>
                   </div>
                 )}
@@ -379,7 +290,7 @@ export function Login() {
                 E-posta
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.25)' }} />
                 <input
                   type="email"
                   value={email}
@@ -401,7 +312,7 @@ export function Login() {
                 Şifre
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.25)' }} />
                 <input
                   type="password"
                   value={password}
@@ -504,7 +415,7 @@ export function Login() {
             className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl"
             style={{ background: 'linear-gradient(135deg, #6D28D9, #EC4899)', boxShadow: '0 0 60px rgba(109,40,217,0.5)' }}
           >
-            <span className="text-2xl font-bold text-white">{getInitials(email)}</span>
+            <span className="text-2xl font-bold text-white">MI</span>
           </div>
           <h3 style={{ fontSize: '26px', fontWeight: 800, color: 'white', letterSpacing: '-0.02em', marginBottom: 12 }}>
             Hesabını güvenle oluştur

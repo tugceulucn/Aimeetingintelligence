@@ -277,6 +277,7 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.profileInfoSub': 'Update your personal information',
     'settings.changeAvatar': 'Change Avatar',
     'settings.avatarHint': 'JPG, PNG or GIF. Max size 2MB.',
+    'settings.avatarHintCustom': 'JPG, JPEG, or PNG. Max size 2MB.',
     'settings.firstName': 'First Name',
     'settings.lastName': 'Last Name',
     'settings.email': 'Email',
@@ -333,6 +334,11 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.weeklyReports': 'Weekly reports',
     'settings.weeklyReportsSub': 'Weekly productivity and analytics report',
     'settings.savePrefs': 'Save Preferences',
+    'settings.profileUpdated': 'Profile information updated.',
+    'settings.profileUpdateFailed': 'Profile could not be saved.',
+    'settings.workspaceUpdated': 'Workspace updated.',
+    'settings.workspaceUpdateFailed': 'Workspace could not be saved.',
+    'settings.invalidAvatarType': 'Please choose a JPG, JPEG, or PNG file.',
 
     // Theme
     'theme.light': 'Light',
@@ -587,6 +593,7 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.profileInfoSub': 'Kişisel bilgilerinizi güncelleyin',
     'settings.changeAvatar': 'Avatar Değiştir',
     'settings.avatarHint': 'JPG, PNG veya GIF. Maks. boyut 2MB.',
+    'settings.avatarHintCustom': 'JPG, JPEG veya PNG. Maks. boyut 2MB.',
     'settings.firstName': 'Ad',
     'settings.lastName': 'Soyad',
     'settings.email': 'E-posta',
@@ -643,6 +650,11 @@ const translations: Record<Language, Record<string, string>> = {
     'settings.weeklyReports': 'Haftalık raporlar',
     'settings.weeklyReportsSub': 'Haftalık verimlilik ve analitik raporu',
     'settings.savePrefs': 'Tercihleri Kaydet',
+    'settings.profileUpdated': 'Profil bilgileri güncellendi.',
+    'settings.profileUpdateFailed': 'Profil kaydedilemedi.',
+    'settings.workspaceUpdated': 'Çalışma alanı güncellendi.',
+    'settings.workspaceUpdateFailed': 'Çalışma alanı kaydedilemedi.',
+    'settings.invalidAvatarType': 'Lütfen sadece JPG, JPEG veya PNG seçin.',
 
     // Theme
     'theme.light': 'Açık',

@@ -275,9 +275,14 @@ export function TopNav() {
               background: 'linear-gradient(135deg, #6D28D9, #EC4899)',
               fontWeight: 700,
               boxShadow: '0 0 12px rgba(109,40,217,0.4)',
+              overflow: 'hidden',
             }}
           >
-            {profile.initials}
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt={profile.fullName} className="h-full w-full object-cover" />
+            ) : (
+              profile.initials
+            )}
           </button>
         </div>
       </div>
