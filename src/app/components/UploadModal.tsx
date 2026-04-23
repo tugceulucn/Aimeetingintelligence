@@ -1,11 +1,12 @@
 // UploadModal.tsx — Gladia-powered recording upload & transcription modal
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   X, FileAudio, Upload, RefreshCw, AlertCircle,
   CheckCircle, Copy, Download, Clock, Languages, User, Sparkles, Flag, CheckSquare,
 } from 'lucide-react';
 import { useApp, useThemeColors } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import {
   uploadAudioFile,
   startTranscription,
@@ -14,6 +15,7 @@ import {
   TranscriptUtterance,
 } from '../services/gladiaService';
 import { analyzeMeeting, isAIConfigured, type MeetingAnalysis } from '../services/aiService';
+import { saveMeetingRecording } from '../lib/meetingPersistence';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,6 +87,7 @@ interface Props {
 
 export function UploadModal({ onClose }: Props) {
   const { t } = useApp();
+  const { session, workspace } = useAuth();
   const tc = useThemeColors();
   const isLight = tc.isLight;
 
@@ -100,6 +103,9 @@ export function UploadModal({ onClose }: Props) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<MeetingAnalysis | null>(null);
   const [analyzeError, setAnalyzeError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
 
   // Theme tokens
   const modalBg    = isLight ? '#ffffff' : 'rgba(13,10,22,0.97)';
@@ -121,6 +127,10 @@ export function UploadModal({ onClose }: Props) {
     setErrorMsg('');
     setProgress(10);
     setProgressLabel('Uploading file...');
+    setAnalysis(null);
+    setAnalyzeError('');
+    setSaveError('');
+    setSaveSuccess('');
 
     try {
       const audioUrl = await uploadAudioFile(file);
@@ -195,6 +205,53 @@ export function UploadModal({ onClose }: Props) {
       setAnalyzeError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
     } finally {
       setIsAnalyzing(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!result) {
+      return;
+    }
+
+    if (!session || !workspace) {
+      setSaveError('Kayit icin aktif oturum ve workspace gerekli.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError('');
+    setSaveSuccess('');
+
+    try {
+      let nextAnalysis = analysis;
+
+      if (!nextAnalysis) {
+        if (!isAIConfigured()) {
+          throw new Error('Puan, karar ve eylem kaydi icin once AI analizi gerekli.');
+        }
+
+        nextAnalysis = await analyzeMeeting(result.fullText, result.utterances);
+        setAnalysis(nextAnalysis);
+      }
+
+      const saved = await saveMeetingRecording({
+        session,
+        workspace,
+        fileName: result.fileName,
+        transcriptText: result.fullText,
+        utterances: result.utterances,
+        language: result.language,
+        durationSeconds: result.duration,
+        analysis: nextAnalysis,
+      });
+
+      setSaveSuccess(saved.meetingId
+        ? `Toplanti kaydedildi. Meeting ID: ${saved.meetingId}`
+        : 'Toplanti kaydedildi.');
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Kayit sirasinda bir hata olustu.');
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -374,13 +431,40 @@ export function UploadModal({ onClose }: Props) {
               <span className="text-xs" style={{ color: textMuted }}>{result.utterances.length} utterances</span>
             )}
             <button
-              onClick={() => { setStatus('idle'); setResult(null); setProgress(0); setAnalysis(null); setAnalyzeError(''); }}
+              onClick={handleSave}
+              disabled={isSaving || !session || !workspace}
+              className="text-xs px-3 py-1.5 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ color: '#34d399', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)' }}
+            >
+              {isSaving ? 'Kaydediliyor...' : 'Supabase\'e Kaydet'}
+            </button>
+            <button
+              onClick={() => {
+                setStatus('idle');
+                setResult(null);
+                setProgress(0);
+                setAnalysis(null);
+                setAnalyzeError('');
+                setSaveError('');
+                setSaveSuccess('');
+              }}
               className="ml-auto text-xs px-3 py-1.5 rounded-lg transition-all"
               style={{ color: '#a78bfa', background: 'rgba(109,40,217,0.1)', border: '1px solid rgba(109,40,217,0.25)' }}
             >
               Upload another
             </button>
           </div>
+
+          {(saveError || saveSuccess) && (
+            <div className="px-5 py-3 border-t" style={{ borderColor: border }}>
+              {saveError && (
+                <p className="text-xs" style={{ color: '#EF4444' }}>{saveError}</p>
+              )}
+              {saveSuccess && (
+                <p className="text-xs" style={{ color: '#34d399' }}>{saveSuccess}</p>
+              )}
+            </div>
+          )}
 
           {/* ── AI Analysis Section ─────────────────────────────────────── */}
 
