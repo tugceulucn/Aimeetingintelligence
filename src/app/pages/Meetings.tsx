@@ -1,24 +1,70 @@
 import { Link } from 'react-router';
-import { useState } from 'react';
-import { Search, Filter, ChevronDown, Video, MessageSquare, Users, Clock, Calendar } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, Filter, ChevronDown, Video, MessageSquare, Users, Clock, Calendar, Upload } from 'lucide-react';
 import { MeetingScoreBadge } from '../components/MeetingScoreBadge';
-import { meetings } from '../data/mockData';
 import { useApp, useThemeColors } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { fetchWorkspaceMeetings, type MeetingListItem } from '../lib/meetingQueries';
 
-const platformColors: Record<string, string> = { zoom: '#2D8CFF', teams: '#5558AF', meet: '#34A853' };
-const platformIcons = { zoom: Video, meet: MessageSquare, teams: Users };
+const platformColors: Record<string, string> = { zoom: '#2D8CFF', teams: '#5558AF', meet: '#34A853', upload: '#f59e0b' };
+const platformIcons = { zoom: Video, meet: MessageSquare, teams: Users, upload: Upload };
 
 export function Meetings() {
   const { t } = useApp();
+  const { session, workspace } = useAuth();
   const tc = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMeetings() {
+      if (!session || !workspace) {
+        if (active) {
+          setMeetings([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError('');
+        const data = await fetchWorkspaceMeetings(session, workspace.id);
+        if (active) {
+          setMeetings(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Toplantilar yuklenemedi.');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadMeetings();
+
+    return () => {
+      active = false;
+    };
+  }, [session, workspace]);
 
   const filteredMeetings = meetings.filter((m) =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const avgDuration = Math.round(meetings.reduce((s, m) => s + m.duration, 0) / meetings.length);
-  const avgScore = Math.round(meetings.reduce((s, m) => s + m.score, 0) / meetings.length);
+  const avgDuration = meetings.length > 0
+    ? Math.round(meetings.reduce((s, m) => s + m.duration, 0) / meetings.length)
+    : 0;
+  const avgScore = meetings.length > 0
+    ? Math.round(meetings.reduce((s, m) => s + m.score, 0) / meetings.length)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -102,7 +148,21 @@ export function Meetings() {
               </tr>
             </thead>
             <tbody>
-              {filteredMeetings.map((meeting, i) => {
+              {loading && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-10 text-center text-sm" style={{ color: tc.textMuted }}>
+                    Toplantilar yukleniyor...
+                  </td>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={8} className="px-6 py-10 text-center text-sm" style={{ color: '#f87171' }}>
+                    {error}
+                  </td>
+                </tr>
+              )}
+              {!loading && !error && filteredMeetings.map((meeting, i) => {
                 const PlatformIcon = platformIcons[meeting.platform];
                 const pColor = platformColors[meeting.platform] || '#6D28D9';
                 return (
@@ -183,7 +243,7 @@ export function Meetings() {
             </tbody>
           </table>
         </div>
-        {filteredMeetings.length === 0 && (
+        {!loading && !error && filteredMeetings.length === 0 && (
           <div className="py-16 text-center">
             <p style={{ color: tc.textMuted, fontSize: '14px' }}>{t('meetings.noResults')}</p>
           </div>

@@ -23,6 +23,14 @@ export interface MeetingDecision {
   source_text: string;
 }
 
+export interface MeetingRisk {
+  risk: string;
+  severity: 'low' | 'medium' | 'high' | null;
+  type: string | null;
+  confidence: number;
+  source_text: string;
+}
+
 export interface MeetingAnalysis {
   summary: {
     short_summary: string;
@@ -30,6 +38,7 @@ export interface MeetingAnalysis {
   };
   actions: MeetingAction[];
   decisions: MeetingDecision[];
+  risks: MeetingRisk[];
   metrics: {
     meeting_duration_minutes: number;
     speaker_distribution: Array<{ speaker: string; talk_time_ratio: number }>;
@@ -71,6 +80,15 @@ const JSON_SCHEMA = `{
   "decisions": [
     {
       "decision": "string",
+      "confidence": 0.0,
+      "source_text": "string"
+    }
+  ],
+  "risks": [
+    {
+      "risk": "string",
+      "severity": "low | medium | high | null",
+      "type": "string or null",
       "confidence": 0.0,
       "source_text": "string"
     }
@@ -164,6 +182,17 @@ function normalize(parsed: Record<string, unknown>): MeetingAnalysis {
           decision: (d.decision as string) ?? '',
           confidence: typeof d.confidence === 'number' ? d.confidence : 0.5,
           source_text: (d.source_text as string) ?? '',
+        }))
+      : [],
+    risks: Array.isArray(parsed.risks)
+      ? (parsed.risks as Array<Record<string, unknown>>).map((risk) => ({
+          risk: (risk.risk as string) ?? '',
+          severity: (['low', 'medium', 'high'].includes(risk.severity as string)
+            ? risk.severity
+            : null) as 'low' | 'medium' | 'high' | null,
+          type: (risk.type as string | null) ?? null,
+          confidence: typeof risk.confidence === 'number' ? risk.confidence : 0.5,
+          source_text: (risk.source_text as string) ?? '',
         }))
       : [],
     metrics: {
