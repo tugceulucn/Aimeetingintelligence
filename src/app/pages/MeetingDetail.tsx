@@ -14,7 +14,7 @@ const platformColors: Record<string, string> = { zoom: '#2D8CFF', teams: '#5558A
 
 export function MeetingDetail() {
   const { id } = useParams();
-  const { t } = useApp();
+  const { t, language } = useApp();
   const { session } = useAuth();
   const tc = useThemeColors();
   const [activeTab, setActiveTab] = useState<'transcript' | 'insights' | 'decisions' | 'actions'>('insights');
@@ -67,7 +67,7 @@ export function MeetingDetail() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-sm" style={{ color: tc.textDim }}>Toplanti yukleniyor...</p>
+        <p className="text-sm" style={{ color: tc.textDim }}>{t('detail.loading')}</p>
       </div>
     );
   }
@@ -134,9 +134,9 @@ export function MeetingDetail() {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-5">
               {[
-                { icon: Calendar, text: new Date(meeting.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) },
-                { icon: Clock, text: `${meeting.duration} minutes` },
-                { icon: Users, text: `${meeting.participants} participants` },
+                { icon: Calendar, text: new Date(meeting.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) },
+                { icon: Clock, text: `${meeting.duration} ${t('detail.minutes')}` },
+                { icon: Users, text: `${meeting.participants} ${t('detail.participants')}` },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2">
                   <Icon className="h-4 w-4" style={{ color: DIM2 }} />
@@ -165,7 +165,7 @@ export function MeetingDetail() {
                   {name.split(' ').map((n) => n[0]).join('')}
                 </div>
               )) : (
-                <span className="text-sm" style={{ color: DIM2 }}>No speakers detected</span>
+                <span className="text-sm" style={{ color: DIM2 }}>{t('detail.noSpeakersDetected')}</span>
               )}
             </div>
           </div>
@@ -228,7 +228,7 @@ export function MeetingDetail() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm" style={{ color: DIM2 }}>No highlights available.</p>
+                  <p className="text-sm" style={{ color: DIM2 }}>{t('detail.noHighlightsAvailable')}</p>
                 )}
               </div>
               {meeting.risks.length > 0 && (
@@ -286,12 +286,12 @@ export function MeetingDetail() {
                     <div>
                       <p className="text-sm" style={{ color: WH, fontWeight: 600 }}>{decision.decision}</p>
                       <p className="text-xs mt-1" style={{ color: DIM2 }}>
-                        Confidence: {Math.round(decision.confidence * 100)}%
+                        {t('detail.confidence')}: {Math.round(decision.confidence * 100)}%
                       </p>
                     </div>
                   </div>
                 )) : (
-                  <p className="text-sm" style={{ color: DIM2 }}>No decisions recorded.</p>
+                  <p className="text-sm" style={{ color: DIM2 }}>{t('detail.noDecisionsRecorded')}</p>
                 )}
               </div>
             </div>
@@ -309,7 +309,7 @@ export function MeetingDetail() {
                     <div className="flex-1">
                       <p className="text-sm" style={{ color: WH, fontWeight: 600 }}>{action.task}</p>
                       <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: DIM2 }}>
-                        <span>{t('detail.assignedTo')} <span style={{ color: '#a78bfa', fontWeight: 600 }}>{action.owner || 'Unassigned'}</span></span>
+                        <span>{t('detail.assignedTo')} <span style={{ color: '#a78bfa', fontWeight: 600 }}>{action.owner || t('detail.unassigned')}</span></span>
                         {action.dueDate && (
                           <>
                             <span>•</span>
@@ -320,7 +320,7 @@ export function MeetingDetail() {
                     </div>
                   </div>
                 )) : (
-                  <p className="text-sm" style={{ color: DIM2 }}>No actions recorded.</p>
+                  <p className="text-sm" style={{ color: DIM2 }}>{t('detail.noActionsRecorded')}</p>
                 )}
               </div>
             </div>
@@ -386,12 +386,14 @@ export function MeetingDetail() {
                 <>
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-                    <span style={{ fontSize: '13px', color: '#f59e0b' }}>Participation could be more balanced</span>
+                    <span style={{ fontSize: '13px', color: '#f59e0b' }}>{t('detail.participationWarning')}</span>
                   </div>
                   {meeting.decisions < 2 && (
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-                      <span style={{ fontSize: '13px', color: '#f59e0b' }}>Only {meeting.decisions} decision{meeting.decisions !== 1 ? 's' : ''} made</span>
+                      <span style={{ fontSize: '13px', color: '#f59e0b' }}>
+                        {t('detail.onlyDecisionsMade').replace('{count}', String(meeting.decisions))}
+                      </span>
                     </div>
                   )}
                 </>
